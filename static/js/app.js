@@ -2,7 +2,7 @@
    Система управління розкладом — JS клієнт
    ═══════════════════════════════════════════ */
 
-'use strict';
+
 
 // ─── State ───────────────────────────────────
 const state = {
@@ -74,6 +74,18 @@ document.querySelectorAll('.nav-link').forEach(link => {
 
 // ─── Initial Load ────────────────────────────
 async function bootstrap() {
+  const [t, r, g, s, l] = await Promise.all([
+    api('/api/teachers'), api('/api/rooms'),
+    api('/api/groups'), api('/api/subjects'), api('/api/lessons')
+  ]);
+  state.teachers = t.data || [];
+  state.rooms    = r.data || [];
+  state.groups   = g.data || [];
+  state.subjects = s.data || [];
+  state.lessons  = l.data || [];
+  await loadDashboard();
+  populateFilterSelects();
+}
 
 // ─── Dashboard ───────────────────────────────
 async function loadDashboard() {
@@ -679,18 +691,31 @@ async function refreshLessons() {
   state.lessons = r.data || [];
 }
 
-// ─── Boot ────────────────────────────────────
-  const [t, r, g, s, l] = await Promise.all([
-    api('/api/teachers'), api('/api/rooms'),
-    api('/api/groups'), api('/api/subjects'), api('/api/lessons')
-  ]);
-  state.teachers = t.data || [];
-  state.rooms    = r.data || [];
-  state.groups   = g.data || [];
-  state.subjects = s.data || [];
-  state.lessons  = l.data || [];
-  await loadDashboard();
-  populateFilterSelects();
-}
-
 bootstrap();
+
+// Експортуємо функції в глобальний scope для onclick handlers
+window.openModal          = openModal;
+window.closeModal         = closeModal;
+window.loadScheduleView   = loadScheduleView;
+window.openLessonModal    = openLessonModal;
+window.openAutoModal      = openAutoModal;
+window.clearSchedule      = clearSchedule;
+window.saveLesson         = saveLesson;
+window.autoSchedule       = autoSchedule;
+window.deleteLesson       = deleteLesson;
+window.openTeacherModal   = openTeacherModal;
+window.saveTeacher        = saveTeacher;
+window.deleteTeacher      = deleteTeacher;
+window.renderTeachers     = renderTeachers;
+window.openRoomModal      = openRoomModal;
+window.saveRoom           = saveRoom;
+window.deleteRoom         = deleteRoom;
+window.renderRooms        = renderRooms;
+window.openGroupModal     = openGroupModal;
+window.saveGroup          = saveGroup;
+window.deleteGroup        = deleteGroup;
+window.renderGroups       = renderGroups;
+window.openSubjectModal   = openSubjectModal;
+window.saveSubject        = saveSubject;
+window.deleteSubject      = deleteSubject;
+window.renderSubjects     = renderSubjects;

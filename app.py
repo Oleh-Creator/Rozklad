@@ -18,6 +18,7 @@ if not _secret:
     _secret = os.urandom(32)
 app.config["SECRET_KEY"] = _secret
 app.config["WTF_CSRF_TIME_LIMIT"] = 3600
+app.config["WTF_CSRF_CHECK_DEFAULT"] = False
 csrf = CSRFProtect(app)
 
 service = ScheduleService()
@@ -56,7 +57,7 @@ def api_get_teachers():
 
 @app.route("/api/teachers", methods=["POST"])
 def api_add_teacher():
-    data = request.json
+    data = request.get_json(force=True)
     try:
         t = service.save_teacher(data)
         return ok({"id": t.id}, "Викладача додано")
@@ -65,7 +66,7 @@ def api_add_teacher():
 
 @app.route("/api/teachers/<int:tid>", methods=["PUT"])
 def api_update_teacher(tid):
-    data = request.json
+    data = request.get_json(force=True)
     data["id"] = tid
     try:
         service.save_teacher(data)
@@ -93,7 +94,7 @@ def api_get_rooms():
 
 @app.route("/api/rooms", methods=["POST"])
 def api_add_room():
-    data = request.json
+    data = request.get_json(force=True)
     try:
         r = service.save_room(data)
         return ok({"id": r.id}, "Аудиторію додано")
@@ -119,7 +120,7 @@ def api_get_groups():
 
 @app.route("/api/groups", methods=["POST"])
 def api_add_group():
-    data = request.json
+    data = request.get_json(force=True)
     try:
         g = service.save_group(data)
         return ok({"id": g.id}, "Групу додано")
@@ -147,7 +148,7 @@ def api_get_subjects():
 
 @app.route("/api/subjects", methods=["POST"])
 def api_add_subject():
-    data = request.json
+    data = request.get_json(force=True)
     try:
         s = service.save_subject(data)
         return ok({"id": s.id}, "Дисципліну додано")
@@ -171,7 +172,7 @@ def api_get_lessons():
 
 @app.route("/api/lessons", methods=["POST"])
 def api_add_lesson():
-    data = request.json
+    data = request.get_json(force=True)
     success, message, lesson = service.add_lesson(
         subject_id=int(data["subject_id"]),
         teacher_id=int(data["teacher_id"]),
@@ -186,7 +187,7 @@ def api_add_lesson():
 
 @app.route("/api/lessons/auto", methods=["POST"])
 def api_auto_schedule():
-    data = request.json
+    data = request.get_json(force=True)
     success, message, lesson = service.auto_schedule(
         subject_id=int(data["subject_id"]),
         teacher_id=int(data["teacher_id"]),
