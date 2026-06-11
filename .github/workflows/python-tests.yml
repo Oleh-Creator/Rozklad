@@ -12,6 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
@@ -25,8 +27,12 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        python -m pytest test_schedule.py -v --cov=. --cov-report=term-missing
+        python -m pytest test_schedule.py -v --cov=. --cov-report=xml:coverage.xml --cov-report=term-missing
 
-    - name: Print coverage summary
-      run: |
-        echo "Tests completed successfully"
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarqube-scan-action@v6
+      with:
+        args: >
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
