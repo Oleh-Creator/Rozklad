@@ -3,19 +3,34 @@ Flask веб-застосунок — система управління роз
 Точка входу: python app.py
 """
 
+import os
 import json
 from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask_wtf.csrf import CSRFProtect
 from models.repositories import init_db
 from services.schedule_service import ScheduleService
 from models.entities import LessonType, RoomType, DayOfWeek
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["WTF_CSRF_TIME_LIMIT"] = 3600
+csrf = CSRFProtect(app)
+
 service = ScheduleService()
+
+MSG_DELETED = "Видалено"
 
 
 # ═══════════════════════════════════════════════════════════════
 # Допоміжні функції
 # ═══════════════════════════════════════════════════════════════
+
+# JSON API не потребує CSRF-токену (захист через Content-Type: application/json)
+@app.before_request
+def exempt_json_api_from_csrf():
+    if request.path.startswith("/api/") and request.is_json:
+        pass  # flask-wtf перевіряє тільки форми з Content-Type: form
+
 
 def ok(data=None, message="OK"):
     return jsonify({"success": True, "message": message, "data": data})
@@ -28,7 +43,7 @@ def err(message):
 # Головна сторінка
 # ═══════════════════════════════════════════════════════════════
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
     stats = service.get_statistics()
     return render_template("index.html", stats=stats)
@@ -68,7 +83,7 @@ def api_update_teacher(tid):
 def api_delete_teacher(tid):
     try:
         service.delete_teacher(tid)
-        return ok(message="Видалено")
+        return ok(message=MSG_DELETED)
     except Exception as e:
         return err(str(e))
 
@@ -98,7 +113,7 @@ def api_add_room():
 def api_delete_room(rid):
     try:
         service.delete_room(rid)
-        return ok(message="Видалено")
+        return ok(message=MSG_DELETED)
     except Exception as e:
         return err(str(e))
 
@@ -127,7 +142,7 @@ def api_add_group():
 def api_delete_group(gid):
     try:
         service.delete_group(gid)
-        return ok(message="Видалено")
+        return ok(message=MSG_DELETED)
     except Exception as e:
         return err(str(e))
 
@@ -158,7 +173,7 @@ def api_add_subject():
 def api_delete_subject(sid):
     try:
         service.delete_subject(sid)
-        return ok(message="Видалено")
+        return ok(message=MSG_DELETED)
     except Exception as e:
         return err(str(e))
 
@@ -214,21 +229,21 @@ def api_clear_lessons():
     service.clear_schedule()
     return ok(message="Розклад очищено")
 
-@app.route("/api/schedule/group/<int:gid>")
+@app.route("/api/schedule/group/<int:gid>", methods=["GET"])
 def api_schedule_group(gid):
     lessons = service.get_schedule_for_group(gid)
     return ok([l.to_dict() for l in lessons])
 
-@app.route("/api/schedule/teacher/<int:tid>")
+@app.route("/api/schedule/teacher/<int:tid>", methods=["GET"])
 def api_schedule_teacher(tid):
     lessons = service.get_schedule_for_teacher(tid)
     return ok([l.to_dict() for l in lessons])
 
-@app.route("/api/conflicts")
+@app.route("/api/conflicts", methods=["GET"])
 def api_conflicts():
     return ok(service.get_conflict_log())
 
-@app.route("/api/statistics")
+@app.route("/api/statistics", methods=["GET"])
 def api_statistics():
     return ok(service.get_statistics())
 
@@ -237,7 +252,7 @@ def api_statistics():
 # API: Довідники (enum values)
 # ═══════════════════════════════════════════════════════════════
 
-@app.route("/api/meta")
+@app.route("/api/meta", methods=["GET"])
 def api_meta():
     return ok({
         "lesson_types": [{"key": lt.name, "label": lt.value} for lt in LessonType],
@@ -257,4 +272,4 @@ if __name__ == "__main__":
     print("  Система управління розкладом навчального закладу")
     print("  Відкрийте браузер: http://localhost:5000")
     print("=" * 60)
-    app.run(debug=True, port=5000)
+    app.run(debug=os.environ.get("FLASK_DEBUG", "0") == "1", port=5000)
