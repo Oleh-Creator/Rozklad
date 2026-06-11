@@ -29,8 +29,7 @@ MSG_DELETED = "Видалено"
 # JSON API не потребує CSRF-токену (захист через Content-Type: application/json)
 @app.before_request
 def exempt_json_api_from_csrf():
-    if request.path.startswith("/api/") and request.is_json:
-        pass
+    """JSON API routes are safe from CSRF: requests use Content-Type: application/json."""
 
 
 def ok(data=None, message="OK"):

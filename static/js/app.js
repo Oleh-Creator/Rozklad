@@ -182,7 +182,7 @@ function renderTimetable(lessons) {
     for (let s = 1; s <= 6; s++) table[d][s] = [];
   }
   lessons.forEach(l => {
-    if (table[l.day_index] && table[l.day_index][l.slot])
+    if (table[l.day_index]?.[l.slot])
       table[l.day_index][l.slot].push(l);
   });
 
@@ -688,5 +688,5 @@ state.rooms    = r.data || [];
 state.groups   = g.data || [];
 state.subjects = s.data || [];
 state.lessons  = l.data || [];
-loadDashboard();
+await loadDashboard();
 populateFilterSelects();
