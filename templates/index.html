@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Система управління розкладом</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-brand">
+    <span class="nav-icon">📅</span>
+    <span>Система управління розкладом</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" class="nav-link active" data-tab="dashboard">Огляд</a>
+    <a href="#" class="nav-link" data-tab="schedule">Розклад</a>
+    <a href="#" class="nav-link" data-tab="teachers">Викладачі</a>
+    <a href="#" class="nav-link" data-tab="rooms">Аудиторії</a>
+    <a href="#" class="nav-link" data-tab="groups">Групи</a>
+    <a href="#" class="nav-link" data-tab="subjects">Дисципліни</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  <!-- ── DASHBOARD ── -->
+  <section id="tab-dashboard" class="tab-content active">
+    <h2 class="section-title">📊 Загальна статистика</h2>
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="stat-lessons">—</div><div class="stat-label">Занять у розкладі</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-teachers">—</div><div class="stat-label">Викладачів</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-rooms">—</div><div class="stat-label">Аудиторій</div></div>
+      <div class="stat-card"><div class="stat-num" id="stat-groups">—</div><div class="stat-label">Навч. груп</div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="card">
+        <h3>⚡ Конфлікти розкладу</h3>
+        <div id="conflict-list" class="conflict-list"><p class="muted">Конфліктів немає</p></div>
+      </div>
+      <div class="card">
+        <h3>📈 Навантаження викладачів</h3>
+        <div id="teacher-load" class="load-list"></div>
+      </div>
+    </div>
+
+    <div class="card mt">
+      <h3>💡 Патерни проєктування</h3>
+      <div class="patterns-grid">
+        <div class="pattern-badge"><span class="badge-icon">🔗</span><strong>Chain of Responsibility</strong><p>Перевірка обмежень розкладу: викладач → аудиторія → група → придатність</p></div>
+        <div class="pattern-badge"><span class="badge-icon">🎯</span><strong>Strategy</strong><p>Алгоритми вибору слоту: збалансований, ранній, після обіду</p></div>
+        <div class="pattern-badge"><span class="badge-icon">👁</span><strong>Observer</strong><p>Журналювання подій і повідомлення про конфлікти</p></div>
+        <div class="pattern-badge"><span class="badge-icon">🔨</span><strong>Builder</strong><p>Поетапне конструювання об'єкта Заняття</p></div>
+        <div class="pattern-badge"><span class="badge-icon">1️⃣</span><strong>Singleton</strong><p>Єдиний екземпляр планувальника в системі</p></div>
+        <div class="pattern-badge"><span class="badge-icon">🗄</span><strong>Repository</strong><p>Ізоляція доступу до даних SQLite</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SCHEDULE ── -->
+  <section id="tab-schedule" class="tab-content">
+    <div class="flex-between">
+      <h2 class="section-title">📅 Розклад занять</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="openLessonModal()">+ Додати вручну</button>
+        <button class="btn btn-success" onclick="openAutoModal()">⚡ Авто-підбір</button>
+        <button class="btn btn-danger" onclick="clearSchedule()">🗑 Очистити</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <label>Фільтр по групі:
+        <select id="filter-group" onchange="loadScheduleView()">
+          <option value="">Усі групи</option>
+        </select>
+      </label>
+      <label>Фільтр по викладачу:
+        <select id="filter-teacher" onchange="loadScheduleView()">
+          <option value="">Усі викладачі</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="schedule-grid" class="schedule-grid"></div>
+  </section>
+
+  <!-- ── TEACHERS ── -->
+  <section id="tab-teachers" class="tab-content">
+    <div class="flex-between">
+      <h2 class="section-title">👨‍🏫 Викладачі</h2>
+      <button class="btn btn-primary" onclick="openTeacherModal()">+ Додати</button>
+    </div>
+    <div id="teachers-list" class="cards-list"></div>
+  </section>
+
+  <!-- ── ROOMS ── -->
+  <section id="tab-rooms" class="tab-content">
+    <div class="flex-between">
+      <h2 class="section-title">🏛 Аудиторії</h2>
+      <button class="btn btn-primary" onclick="openRoomModal()">+ Додати</button>
+    </div>
+    <div id="rooms-list" class="cards-list"></div>
+  </section>
+
+  <!-- ── GROUPS ── -->
+  <section id="tab-groups" class="tab-content">
+    <div class="flex-between">
+      <h2 class="section-title">👥 Навчальні групи</h2>
+      <button class="btn btn-primary" onclick="openGroupModal()">+ Додати</button>
+    </div>
+    <div id="groups-list" class="cards-list"></div>
+  </section>
+
+  <!-- ── SUBJECTS ── -->
+  <section id="tab-subjects" class="tab-content">
+    <div class="flex-between">
+      <h2 class="section-title">📚 Дисципліни</h2>
+      <button class="btn btn-primary" onclick="openSubjectModal()">+ Додати</button>
+    </div>
+    <div id="subjects-list" class="cards-list"></div>
+  </section>
+
+</main>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Teacher Modal -->
+<div id="modal-teacher" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Викладач</h3>
+    <input type="hidden" id="teacher-id">
+    <div class="form-group"><label>ПІБ</label><input type="text" id="teacher-name" placeholder="Іваненко Іван Іванович"></div>
+    <div class="form-group"><label>Кафедра</label><input type="text" id="teacher-dept" placeholder="Кафедра інформатики"></div>
+    <div class="form-group"><label>Дисципліни (через кому)</label><input type="text" id="teacher-subjects" placeholder="Математика, Фізика"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-teacher')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveTeacher()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Room Modal -->
+<div id="modal-room" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Аудиторія</h3>
+    <div class="form-group"><label>Номер</label><input type="text" id="room-number" placeholder="101-А"></div>
+    <div class="form-group"><label>Місткість</label><input type="number" id="room-capacity" placeholder="30" min="1"></div>
+    <div class="form-group"><label>Тип</label>
+      <select id="room-type">
+        <option value="LECTURE_HALL">Лекційна аудиторія</option>
+        <option value="COMPUTER_LAB">Комп'ютерна лабораторія</option>
+        <option value="LABORATORY">Лабораторія</option>
+        <option value="SEMINAR_ROOM">Семінарська кімната</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-room')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveRoom()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Group Modal -->
+<div id="modal-group" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Навчальна група</h3>
+    <div class="form-group"><label>Назва</label><input type="text" id="group-name" placeholder="КН-21"></div>
+    <div class="form-group"><label>Кількість студентів</label><input type="number" id="group-size" placeholder="25" min="1"></div>
+    <div class="form-group"><label>Курс</label><input type="number" id="group-year" placeholder="2" min="1" max="6"></div>
+    <div class="form-group"><label>Спеціальність</label><input type="text" id="group-specialty" placeholder="Комп'ютерні науки"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-group')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveGroup()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Subject Modal -->
+<div id="modal-subject" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>Дисципліна</h3>
+    <div class="form-group"><label>Назва</label><input type="text" id="subject-name" placeholder="Алгоритми та структури даних"></div>
+    <div class="form-group"><label>Годин на тиждень</label><input type="number" id="subject-hours" value="2" min="1"></div>
+    <div class="form-group"><label>Тип заняття</label>
+      <select id="subject-type">
+        <option value="LECTURE">Лекція</option>
+        <option value="PRACTICE">Практика</option>
+        <option value="LAB">Лабораторна</option>
+        <option value="SEMINAR">Семінар</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-subject')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveSubject()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lesson Manual Modal -->
+<div id="modal-lesson" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <h3>Додати заняття вручну</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Дисципліна</label><select id="lesson-subject"></select></div>
+      <div class="form-group"><label>Викладач</label><select id="lesson-teacher"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Група</label><select id="lesson-group"></select></div>
+      <div class="form-group"><label>Аудиторія</label><select id="lesson-room"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>День</label>
+        <select id="lesson-day">
+          <option value="0">Понеділок</option>
+          <option value="1">Вівторок</option>
+          <option value="2">Середа</option>
+          <option value="3">Четвер</option>
+          <option value="4">П'ятниця</option>
+          <option value="5">Субота</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Пара</label>
+        <select id="lesson-slot">
+          <option value="1">1 (08:00–09:35)</option>
+          <option value="2">2 (09:45–11:20)</option>
+          <option value="3">3 (11:30–13:05)</option>
+          <option value="4">4 (13:30–15:05)</option>
+          <option value="5">5 (15:15–16:50)</option>
+          <option value="6">6 (17:00–18:35)</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-lesson')">Скасувати</button>
+      <button class="btn btn-primary" onclick="saveLesson()">Зберегти</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auto Schedule Modal -->
+<div id="modal-auto" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <h3>⚡ Авто-підбір слоту</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Дисципліна</label><select id="auto-subject"></select></div>
+      <div class="form-group"><label>Викладач</label><select id="auto-teacher"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Група</label><select id="auto-group"></select></div>
+      <div class="form-group"><label>Аудиторія</label><select id="auto-room"></select></div>
+    </div>
+    <div class="form-group">
+      <label>Стратегія підбору (патерн Strategy)</label>
+      <select id="auto-strategy">
+        <option value="balanced">🔄 Збалансований розподіл по днях</option>
+        <option value="early">🌅 Якомога раніше (ранній)</option>
+        <option value="afternoon">🌇 Після обіду (слоти 4–6)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-auto')">Скасувати</button>
+      <button class="btn btn-success" onclick="autoSchedule()">⚡ Підібрати слот</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
