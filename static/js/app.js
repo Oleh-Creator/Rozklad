@@ -72,20 +72,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
   });
 });
 
-// ─── Initial Load ────────────────────────────
-async function bootstrap() {
-  const [t, r, g, s, l] = await Promise.all([
-    api('/api/teachers'), api('/api/rooms'),
-    api('/api/groups'), api('/api/subjects'), api('/api/lessons')
-  ]);
-  state.teachers = t.data || [];
-  state.rooms    = r.data || [];
-  state.groups   = g.data || [];
-  state.subjects = s.data || [];
-  state.lessons  = l.data || [];
-  loadDashboard();
-  populateFilterSelects();
-}
+// ─── Initial Load (top-level await, requires type="module") ──
 
 // ─── Dashboard ───────────────────────────────
 async function loadDashboard() {
@@ -100,7 +87,7 @@ async function loadDashboard() {
   const clist = document.getElementById('conflict-list');
   clist.textContent = '';
   const cr = await api('/api/conflicts');
-  if (cr.data && cr.data.length) {
+  if (cr.data?.length) {
     cr.data.forEach(c => {
       const div = document.createElement('div');
       div.className = 'conflict-item';
@@ -240,7 +227,7 @@ function renderTimetable(lessons) {
 
     for (let d = 0; d < 6; d++) {
       const td = document.createElement('td');
-      const cells = table[d][parseInt(slotNum)];
+      const cells = table[d][Number.parseInt(slotNum, 10)];
       cells.forEach(l => {
         const tc = typeColorMap[l.lesson_type] || 'LECTURE';
         const cell = document.createElement('div');
@@ -691,5 +678,15 @@ async function refreshLessons() {
   state.lessons = r.data || [];
 }
 
-// ─── Boot ────────────────────────────────────
-bootstrap();
+// ─── Boot: top-level await ───────────────────
+const [t, r, g, s, l] = await Promise.all([
+  api('/api/teachers'), api('/api/rooms'),
+  api('/api/groups'), api('/api/subjects'), api('/api/lessons')
+]);
+state.teachers = t.data || [];
+state.rooms    = r.data || [];
+state.groups   = g.data || [];
+state.subjects = s.data || [];
+state.lessons  = l.data || [];
+loadDashboard();
+populateFilterSelects();

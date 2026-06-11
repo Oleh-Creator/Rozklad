@@ -25,15 +25,12 @@ service = ScheduleService()
 MSG_DELETED = "Видалено"
 
 
-# ═══════════════════════════════════════════════════════════════
-# Допоміжні функції
-# ═══════════════════════════════════════════════════════════════
 
 # JSON API не потребує CSRF-токену (захист через Content-Type: application/json)
 @app.before_request
 def exempt_json_api_from_csrf():
     if request.path.startswith("/api/") and request.is_json:
-        pass  # flask-wtf перевіряє тільки форми з Content-Type: form
+        pass
 
 
 def ok(data=None, message="OK"):
@@ -43,9 +40,6 @@ def err(message):
     return jsonify({"success": False, "message": message}), 400
 
 
-# ═══════════════════════════════════════════════════════════════
-# Головна сторінка
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/", methods=["GET"])
 def index():
@@ -53,9 +47,6 @@ def index():
     return render_template("index.html", stats=stats)
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Викладачі
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/teachers", methods=["GET"])
 def api_get_teachers():
@@ -92,9 +83,6 @@ def api_delete_teacher(tid):
         return err(str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Аудиторії
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/rooms", methods=["GET"])
 def api_get_rooms():
@@ -122,9 +110,6 @@ def api_delete_room(rid):
         return err(str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Групи
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/groups", methods=["GET"])
 def api_get_groups():
@@ -151,9 +136,6 @@ def api_delete_group(gid):
         return err(str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Дисципліни
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/subjects", methods=["GET"])
 def api_get_subjects():
@@ -182,9 +164,6 @@ def api_delete_subject(sid):
         return err(str(e))
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Розклад (заняття)
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/lessons", methods=["GET"])
 def api_get_lessons():
@@ -252,9 +231,6 @@ def api_statistics():
     return ok(service.get_statistics())
 
 
-# ═══════════════════════════════════════════════════════════════
-# API: Довідники (enum values)
-# ═══════════════════════════════════════════════════════════════
 
 @app.route("/api/meta", methods=["GET"])
 def api_meta():
@@ -266,9 +242,6 @@ def api_meta():
     })
 
 
-# ═══════════════════════════════════════════════════════════════
-# Запуск
-# ═══════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     init_db()

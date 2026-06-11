@@ -9,9 +9,7 @@ from typing import Optional
 from enum import Enum
 
 
-# ─────────────────────────────────────────────
 # Перелічення (Enum) — Value Objects
-# ─────────────────────────────────────────────
 
 class DayOfWeek(Enum):
     MONDAY = ("Понеділок", 0)
@@ -47,9 +45,7 @@ class RoomType(Enum):
     SEMINAR_ROOM = "Семінарська кімната"
 
 
-# ─────────────────────────────────────────────
 # Сутності (Entity)
-# ─────────────────────────────────────────────
 
 @dataclass
 class Teacher:
@@ -78,13 +74,6 @@ class Room:
     def is_suitable_for(self, lesson_type: LessonType, group_size: int) -> bool:
         if group_size > self.capacity:
             return False
-        type_map = {
-            LessonType.LECTURE: RoomType.LECTURE_HALL,
-            LessonType.LAB: RoomType.COMPUTER_LAB,
-            LessonType.SEMINAR: RoomType.SEMINAR_ROOM,
-            LessonType.PRACTICE: RoomType.SEMINAR_ROOM,
-        }
-        preferred = type_map.get(lesson_type)
         # Лекції — тільки в лекційних; решта може йти у семінарській або лекційній
         if lesson_type == LessonType.LECTURE:
             return self.room_type == RoomType.LECTURE_HALL

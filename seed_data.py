@@ -88,7 +88,7 @@ def seed():
     ]
 
     for (si, ti, gi, ri) in schedule_plan:
-        ok, msg, lesson = svc.auto_schedule(
+        ok, msg, _ = svc.auto_schedule(
             subject_id=subject_ids[si],
             teacher_id=teacher_ids[ti],
             group_id=group_ids[gi],

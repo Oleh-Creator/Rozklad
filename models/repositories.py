@@ -16,9 +16,7 @@ from models.entities import (
 DB_PATH = "schedule.db"
 
 
-# ─────────────────────────────────────────────
 # Контекстний менеджер з'єднання
-# ─────────────────────────────────────────────
 
 @contextmanager
 def get_connection():
@@ -35,9 +33,7 @@ def get_connection():
         conn.close()
 
 
-# ─────────────────────────────────────────────
 # Ініціалізація схеми БД
-# ─────────────────────────────────────────────
 
 def init_db():
     with get_connection() as conn:
@@ -88,9 +84,7 @@ def init_db():
         """)
 
 
-# ─────────────────────────────────────────────
 # Repository: Teachers
-# ─────────────────────────────────────────────
 
 class TeacherRepository:
     def get_all(self) -> list[Teacher]:
@@ -133,9 +127,7 @@ class TeacherRepository:
         )
 
 
-# ─────────────────────────────────────────────
 # Repository: Rooms
-# ─────────────────────────────────────────────
 
 class RoomRepository:
     def get_all(self) -> list[Room]:
@@ -179,9 +171,7 @@ class RoomRepository:
         )
 
 
-# ─────────────────────────────────────────────
 # Repository: Groups
-# ─────────────────────────────────────────────
 
 class GroupRepository:
     def get_all(self) -> list[Group]:
@@ -224,9 +214,7 @@ class GroupRepository:
         )
 
 
-# ─────────────────────────────────────────────
 # Repository: Subjects
-# ─────────────────────────────────────────────
 
 class SubjectRepository:
     def get_all(self) -> list[Subject]:
@@ -270,9 +258,7 @@ class SubjectRepository:
         )
 
 
-# ─────────────────────────────────────────────
 # Repository: Lessons
-# ─────────────────────────────────────────────
 
 class LessonRepository:
     def __init__(self):

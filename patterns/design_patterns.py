@@ -18,9 +18,7 @@ from models.entities import (
 )
 
 
-# ═══════════════════════════════════════════════════════════════
 # 1. STRATEGY — алгоритм вибору часового слоту
-# ═══════════════════════════════════════════════════════════════
 
 class SlotSelectionStrategy(ABC):
     """Абстрактна стратегія вибору часового слоту."""
@@ -76,9 +74,7 @@ class AfternoonPreferenceStrategy(SlotSelectionStrategy):
         return min(pool, key=lambda s: (s.day.index, s.slot_number))
 
 
-# ═══════════════════════════════════════════════════════════════
 # 2. OBSERVER — повідомлення про конфлікти та події
-# ═══════════════════════════════════════════════════════════════
 
 @dataclass
 class ScheduleEvent:
@@ -146,9 +142,7 @@ class ScheduleSubject:
             obs.on_event(event)
 
 
-# ═══════════════════════════════════════════════════════════════
 # 3. CHAIN OF RESPONSIBILITY — перевірка обмежень
-# ═══════════════════════════════════════════════════════════════
 
 @dataclass
 class ConstraintResult:
@@ -273,9 +267,7 @@ def build_constraint_chain() -> ConstraintHandler:
     return teacher_conflict
 
 
-# ═══════════════════════════════════════════════════════════════
 # 4. BUILDER — побудова об'єкта Lesson
-# ═══════════════════════════════════════════════════════════════
 
 class LessonBuilder:
     """Будівельник занять — дозволяє поетапно конструювати Lesson."""
@@ -334,9 +326,7 @@ class LessonBuilder:
         )
 
 
-# ═══════════════════════════════════════════════════════════════
 # 5. SINGLETON — єдиний планувальник
-# ═══════════════════════════════════════════════════════════════
 
 class SchedulerMeta(type):
     _instances: dict = {}
