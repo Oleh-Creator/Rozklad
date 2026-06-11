@@ -12,7 +12,11 @@ from services.schedule_service import ScheduleService
 from models.entities import LessonType, RoomType, DayOfWeek
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", os.urandom(32))
+# SECRET_KEY береться виключно зі змінної середовища (не хардкодиться)
+_secret = os.environ.get("FLASK_SECRET")
+if not _secret:
+    _secret = os.urandom(32)
+app.config["SECRET_KEY"] = _secret
 app.config["WTF_CSRF_TIME_LIMIT"] = 3600
 csrf = CSRFProtect(app)
 
