@@ -18,10 +18,14 @@ async function api(path, method = 'GET', body = null) {
 }
 
 // Екранування HTML — захист від XSS (S5696)
+// Використовуємо replaceAll замість innerHTML для уникнення false-positive
 function esc(str) {
-  const d = document.createElement('div');
-  d.textContent = String(str ?? '');
-  return d.innerHTML;
+  return String(str ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#x27;');
 }
 
 // Безпечне створення <option> елементів через DOM API
