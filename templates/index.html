@@ -71,16 +71,18 @@
     </div>
 
     <div class="filter-bar">
-      <label>Фільтр по групі:
+      <div class="filter-item">
+        <label for="filter-group">Фільтр по групі:</label>
         <select id="filter-group" onchange="loadScheduleView()">
           <option value="">Усі групи</option>
         </select>
-      </label>
-      <label>Фільтр по викладачу:
+      </div>
+      <div class="filter-item">
+        <label for="filter-teacher">Фільтр по викладачу:</label>
         <select id="filter-teacher" onchange="loadScheduleView()">
           <option value="">Усі викладачі</option>
         </select>
-      </label>
+      </div>
     </div>
 
     <div id="schedule-grid" class="schedule-grid"></div>
@@ -131,9 +133,9 @@
   <div class="modal">
     <h3>Викладач</h3>
     <input type="hidden" id="teacher-id">
-    <div class="form-group"><label>ПІБ</label><input type="text" id="teacher-name" placeholder="Іваненко Іван Іванович"></div>
-    <div class="form-group"><label>Кафедра</label><input type="text" id="teacher-dept" placeholder="Кафедра інформатики"></div>
-    <div class="form-group"><label>Дисципліни (через кому)</label><input type="text" id="teacher-subjects" placeholder="Математика, Фізика"></div>
+    <div class="form-group"><label for="teacher-name">ПІБ</label><input type="text" id="teacher-name" placeholder="Іваненко Іван Іванович"></div>
+    <div class="form-group"><label for="teacher-dept">Кафедра</label><input type="text" id="teacher-dept" placeholder="Кафедра інформатики"></div>
+    <div class="form-group"><label for="teacher-subjects">Дисципліни (через кому)</label><input type="text" id="teacher-subjects" placeholder="Математика, Фізика"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-teacher')">Скасувати</button>
       <button class="btn btn-primary" onclick="saveTeacher()">Зберегти</button>
@@ -145,9 +147,9 @@
 <div id="modal-room" class="modal-overlay hidden">
   <div class="modal">
     <h3>Аудиторія</h3>
-    <div class="form-group"><label>Номер</label><input type="text" id="room-number" placeholder="101-А"></div>
-    <div class="form-group"><label>Місткість</label><input type="number" id="room-capacity" placeholder="30" min="1"></div>
-    <div class="form-group"><label>Тип</label>
+    <div class="form-group"><label for="room-number">Номер</label><input type="text" id="room-number" placeholder="101-А"></div>
+    <div class="form-group"><label for="room-capacity">Місткість</label><input type="number" id="room-capacity" placeholder="30" min="1"></div>
+    <div class="form-group"><label for="room-type">Тип</label>
       <select id="room-type">
         <option value="LECTURE_HALL">Лекційна аудиторія</option>
         <option value="COMPUTER_LAB">Комп'ютерна лабораторія</option>
@@ -166,10 +168,10 @@
 <div id="modal-group" class="modal-overlay hidden">
   <div class="modal">
     <h3>Навчальна група</h3>
-    <div class="form-group"><label>Назва</label><input type="text" id="group-name" placeholder="КН-21"></div>
-    <div class="form-group"><label>Кількість студентів</label><input type="number" id="group-size" placeholder="25" min="1"></div>
-    <div class="form-group"><label>Курс</label><input type="number" id="group-year" placeholder="2" min="1" max="6"></div>
-    <div class="form-group"><label>Спеціальність</label><input type="text" id="group-specialty" placeholder="Комп'ютерні науки"></div>
+    <div class="form-group"><label for="group-name">Назва</label><input type="text" id="group-name" placeholder="КН-21"></div>
+    <div class="form-group"><label for="group-size">Кількість студентів</label><input type="number" id="group-size" placeholder="25" min="1"></div>
+    <div class="form-group"><label for="group-year">Курс</label><input type="number" id="group-year" placeholder="2" min="1" max="6"></div>
+    <div class="form-group"><label for="group-specialty">Спеціальність</label><input type="text" id="group-specialty" placeholder="Комп'ютерні науки"></div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-group')">Скасувати</button>
       <button class="btn btn-primary" onclick="saveGroup()">Зберегти</button>
@@ -181,9 +183,9 @@
 <div id="modal-subject" class="modal-overlay hidden">
   <div class="modal">
     <h3>Дисципліна</h3>
-    <div class="form-group"><label>Назва</label><input type="text" id="subject-name" placeholder="Алгоритми та структури даних"></div>
-    <div class="form-group"><label>Годин на тиждень</label><input type="number" id="subject-hours" value="2" min="1"></div>
-    <div class="form-group"><label>Тип заняття</label>
+    <div class="form-group"><label for="subject-name">Назва</label><input type="text" id="subject-name" placeholder="Алгоритми та структури даних"></div>
+    <div class="form-group"><label for="subject-hours">Годин на тиждень</label><input type="number" id="subject-hours" value="2" min="1"></div>
+    <div class="form-group"><label for="subject-type">Тип заняття</label>
       <select id="subject-type">
         <option value="LECTURE">Лекція</option>
         <option value="PRACTICE">Практика</option>
@@ -203,15 +205,15 @@
   <div class="modal modal-wide">
     <h3>Додати заняття вручну</h3>
     <div class="form-row">
-      <div class="form-group"><label>Дисципліна</label><select id="lesson-subject"></select></div>
-      <div class="form-group"><label>Викладач</label><select id="lesson-teacher"></select></div>
+      <div class="form-group"><label for="lesson-subject">Дисципліна</label><select id="lesson-subject"></select></div>
+      <div class="form-group"><label for="lesson-teacher">Викладач</label><select id="lesson-teacher"></select></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Група</label><select id="lesson-group"></select></div>
-      <div class="form-group"><label>Аудиторія</label><select id="lesson-room"></select></div>
+      <div class="form-group"><label for="lesson-group">Група</label><select id="lesson-group"></select></div>
+      <div class="form-group"><label for="lesson-room">Аудиторія</label><select id="lesson-room"></select></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>День</label>
+      <div class="form-group"><label for="lesson-day">День</label>
         <select id="lesson-day">
           <option value="0">Понеділок</option>
           <option value="1">Вівторок</option>
@@ -221,7 +223,7 @@
           <option value="5">Субота</option>
         </select>
       </div>
-      <div class="form-group"><label>Пара</label>
+      <div class="form-group"><label for="lesson-slot">Пара</label>
         <select id="lesson-slot">
           <option value="1">1 (08:00–09:35)</option>
           <option value="2">2 (09:45–11:20)</option>
@@ -244,15 +246,15 @@
   <div class="modal modal-wide">
     <h3>⚡ Авто-підбір слоту</h3>
     <div class="form-row">
-      <div class="form-group"><label>Дисципліна</label><select id="auto-subject"></select></div>
-      <div class="form-group"><label>Викладач</label><select id="auto-teacher"></select></div>
+      <div class="form-group"><label for="auto-subject">Дисципліна</label><select id="auto-subject"></select></div>
+      <div class="form-group"><label for="auto-teacher">Викладач</label><select id="auto-teacher"></select></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Група</label><select id="auto-group"></select></div>
-      <div class="form-group"><label>Аудиторія</label><select id="auto-room"></select></div>
+      <div class="form-group"><label for="auto-group">Група</label><select id="auto-group"></select></div>
+      <div class="form-group"><label for="auto-room">Аудиторія</label><select id="auto-room"></select></div>
     </div>
     <div class="form-group">
-      <label>Стратегія підбору (патерн Strategy)</label>
+      <label for="auto-strategy">Стратегія підбору (патерн Strategy)</label>
       <select id="auto-strategy">
         <option value="balanced">🔄 Збалансований розподіл по днях</option>
         <option value="early">🌅 Якомога раніше (ранній)</option>
