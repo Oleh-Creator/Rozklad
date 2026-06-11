@@ -17,6 +17,22 @@ async function api(path, method = 'GET', body = null) {
   return res.json();
 }
 
+// Екранування HTML — захист від XSS (S5696)
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = String(str ?? '');
+  return d.innerHTML;
+}
+
+// Безпечне створення <option> елементів через DOM API
+function makeOption(value, label, selected = false) {
+  const opt = document.createElement('option');
+  opt.value = value;
+  opt.textContent = label;
+  if (selected) opt.selected = true;
+  return opt;
+}
+
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -28,7 +44,10 @@ function openModal(id) { document.getElementById(id).classList.remove('hidden');
 function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 function tag(text, cls) {
-  return `<span class="tag tag-${cls}">${text}</span>`;
+  const span = document.createElement('span');
+  span.className = `tag tag-${esc(cls)}`;
+  span.textContent = text;
+  return span.outerHTML;
 }
 
 // ─── Navigation ──────────────────────────────
@@ -73,40 +92,72 @@ async function loadDashboard() {
   document.getElementById('stat-rooms').textContent     = st.total_rooms;
   document.getElementById('stat-groups').textContent    = st.total_groups;
 
-  // conflicts
-  const cr = await api('/api/conflicts');
+  // conflicts — безпечне DOM-будування
   const clist = document.getElementById('conflict-list');
+  clist.textContent = '';
+  const cr = await api('/api/conflicts');
   if (cr.data && cr.data.length) {
-    clist.innerHTML = cr.data.map(c =>
-      `<div class="conflict-item">⚠ ${c}</div>`
-    ).join('');
+    cr.data.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'conflict-item';
+      div.textContent = '⚠ ' + c;
+      clist.appendChild(div);
+    });
   } else {
-    clist.innerHTML = '<p class="muted">✅ Конфліктів немає</p>';
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = '✅ Конфліктів немає';
+    clist.appendChild(p);
   }
 
-  // teacher load
+  // teacher load — безпечне DOM-будування
   const tl = document.getElementById('teacher-load');
+  tl.textContent = '';
   const load = st.teacher_load || {};
   const maxLoad = Math.max(...Object.values(load), 1);
-  tl.innerHTML = Object.entries(load).map(([name, cnt]) => `
-    <div class="load-item">
-      <div>
-        <div>${name}</div>
-        <div class="load-bar" style="width:${(cnt/maxLoad)*120}px"></div>
-      </div>
-      <strong>${cnt} пар</strong>
-    </div>
-  `).join('') || '<p class="muted">Немає даних</p>';
+  if (Object.keys(load).length === 0) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Немає даних';
+    tl.appendChild(p);
+  } else {
+    Object.entries(load).forEach(([name, cnt]) => {
+      const item = document.createElement('div');
+      item.className = 'load-item';
+
+      const left = document.createElement('div');
+      const nameDiv = document.createElement('div');
+      nameDiv.textContent = name;
+      const bar = document.createElement('div');
+      bar.className = 'load-bar';
+      bar.style.width = `${(cnt / maxLoad) * 120}px`;
+      left.appendChild(nameDiv);
+      left.appendChild(bar);
+
+      const right = document.createElement('strong');
+      right.textContent = `${cnt} пар`;
+
+      item.appendChild(left);
+      item.appendChild(right);
+      tl.appendChild(item);
+    });
+  }
 }
 
 // ─── Schedule view (timetable) ───────────────
+
+// Безпечне заповнення <select> через DOM API — захист від XSS
 function populateFilterSelects() {
   const fg = document.getElementById('filter-group');
   const ft = document.getElementById('filter-teacher');
-  fg.innerHTML = '<option value="">Усі групи</option>' +
-    state.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-  ft.innerHTML = '<option value="">Усі викладачі</option>' +
-    state.teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+  fg.textContent = '';
+  fg.appendChild(makeOption('', 'Усі групи'));
+  state.groups.forEach(g => fg.appendChild(makeOption(g.id, g.name)));
+
+  ft.textContent = '';
+  ft.appendChild(makeOption('', 'Усі викладачі'));
+  state.teachers.forEach(t => ft.appendChild(makeOption(t.id, t.name)));
 }
 
 async function loadScheduleView() {
@@ -127,14 +178,13 @@ async function loadScheduleView() {
   renderTimetable(lessons);
 }
 
-const DAYS   = ['Понеділок','Вівторок','Середа','Четвер','П\'ятниця','Субота'];
-const SLOTS  = [
+const DAYS  = ['Понеділок','Вівторок','Середа','Четвер','П\'ятниця','Субота'];
+const SLOTS = [
   ['1','08:00–09:35'], ['2','09:45–11:20'], ['3','11:30–13:05'],
   ['4','13:30–15:05'], ['5','15:15–16:50'], ['6','17:00–18:35']
 ];
 
 function renderTimetable(lessons) {
-  // Build lookup: day → slot → [lessons]
   const table = {};
   for (let d = 0; d < 6; d++) {
     table[d] = {};
@@ -150,54 +200,142 @@ function renderTimetable(lessons) {
     'Лабораторна': 'LAB', 'Семінар': 'SEMINAR'
   };
 
-  let html = `<table class="timetable"><thead><tr>
-    <th>Пара / Час</th>
-    ${DAYS.map(d => `<th>${d}</th>`).join('')}
-  </tr></thead><tbody>`;
+  // Будуємо таблицю через DOM API — без innerHTML з даними користувача
+  const tbl = document.createElement('table');
+  tbl.className = 'timetable';
 
+  // Заголовок
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const thFirst = document.createElement('th');
+  thFirst.textContent = 'Пара / Час';
+  headRow.appendChild(thFirst);
+  DAYS.forEach(d => {
+    const th = document.createElement('th');
+    th.textContent = d;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  tbl.appendChild(thead);
+
+  // Тіло
+  const tbody = document.createElement('tbody');
   SLOTS.forEach(([slotNum, time]) => {
-    html += `<tr><td class="slot-label"><strong>${slotNum}</strong><br><small>${time}</small></td>`;
+    const tr = document.createElement('tr');
+
+    const tdLabel = document.createElement('td');
+    tdLabel.className = 'slot-label';
+    const strong = document.createElement('strong');
+    strong.textContent = slotNum;
+    const small = document.createElement('small');
+    small.textContent = time;
+    tdLabel.appendChild(strong);
+    tdLabel.appendChild(document.createElement('br'));
+    tdLabel.appendChild(small);
+    tr.appendChild(tdLabel);
+
     for (let d = 0; d < 6; d++) {
+      const td = document.createElement('td');
       const cells = table[d][parseInt(slotNum)];
-      html += '<td>';
       cells.forEach(l => {
         const tc = typeColorMap[l.lesson_type] || 'LECTURE';
-        html += `
-          <div class="lesson-cell lesson-type-${tc}">
-            <button class="lc-delete" onclick="deleteLesson(${l.id})" title="Видалити">✕</button>
-            <div class="lc-subject">${l.subject}</div>
-            <div class="lc-meta">👨‍🏫 ${l.teacher}</div>
-            <div class="lc-meta">👥 ${l.group}</div>
-            <div class="lc-meta">🏛 ауд.${l.room}</div>
-            <div class="lc-meta">${tag(l.lesson_type, 'blue')}</div>
-          </div>`;
-      });
-      html += '</td>';
-    }
-    html += '</tr>';
-  });
+        const cell = document.createElement('div');
+        cell.className = `lesson-cell lesson-type-${tc}`;
 
-  html += '</tbody></table>';
-  document.getElementById('schedule-grid').innerHTML = html;
+        const delBtn = document.createElement('button');
+        delBtn.className = 'lc-delete';
+        delBtn.title = 'Видалити';
+        delBtn.textContent = '✕';
+        delBtn.addEventListener('click', () => deleteLesson(l.id));
+
+        const subjectDiv = document.createElement('div');
+        subjectDiv.className = 'lc-subject';
+        subjectDiv.textContent = l.subject;
+
+        const teacherDiv = document.createElement('div');
+        teacherDiv.className = 'lc-meta';
+        teacherDiv.textContent = '👨‍🏫 ' + l.teacher;
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'lc-meta';
+        groupDiv.textContent = '👥 ' + l.group;
+
+        const roomDiv = document.createElement('div');
+        roomDiv.className = 'lc-meta';
+        roomDiv.textContent = '🏛 ауд.' + l.room;
+
+        const typeSpan = document.createElement('div');
+        typeSpan.className = 'lc-meta';
+        const span = document.createElement('span');
+        span.className = 'tag tag-blue';
+        span.textContent = l.lesson_type;
+        typeSpan.appendChild(span);
+
+        cell.appendChild(delBtn);
+        cell.appendChild(subjectDiv);
+        cell.appendChild(teacherDiv);
+        cell.appendChild(groupDiv);
+        cell.appendChild(roomDiv);
+        cell.appendChild(typeSpan);
+        td.appendChild(cell);
+      });
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+
+  const grid = document.getElementById('schedule-grid');
+  grid.textContent = '';
+  grid.appendChild(tbl);
 }
 
 // ─── Teachers ────────────────────────────────
 function renderTeachers() {
   const el = document.getElementById('teachers-list');
-  if (!state.teachers.length) { el.innerHTML = '<p class="muted">Викладачів ще немає</p>'; return; }
-  el.innerHTML = state.teachers.map(t => `
-    <div class="item-card">
-      <div class="item-card-header">
-        <div class="item-card-title">👨‍🏫 ${t.name}</div>
-        <div class="item-card-actions">
-          <button class="btn btn-danger btn-sm" onclick="deleteTeacher(${t.id})">Видалити</button>
-        </div>
-      </div>
-      <div class="item-card-meta">
-        <div>🏛 ${t.department}</div>
-        <div>📚 ${t.subjects.length ? t.subjects.join(', ') : 'усі дисципліни'}</div>
-      </div>
-    </div>`).join('');
+  el.textContent = '';
+  if (!state.teachers.length) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Викладачів ще немає';
+    el.appendChild(p);
+    return;
+  }
+  state.teachers.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    const header = document.createElement('div');
+    header.className = 'item-card-header';
+
+    const title = document.createElement('div');
+    title.className = 'item-card-title';
+    title.textContent = '👨‍🏫 ' + t.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'item-card-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = 'Видалити';
+    delBtn.addEventListener('click', () => deleteTeacher(t.id));
+    actions.appendChild(delBtn);
+
+    header.appendChild(title);
+    header.appendChild(actions);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-card-meta';
+    const deptLine = document.createElement('div');
+    deptLine.textContent = '🏛 ' + t.department;
+    const subjLine = document.createElement('div');
+    subjLine.textContent = '📚 ' + (t.subjects.length ? t.subjects.join(', ') : 'усі дисципліни');
+    meta.appendChild(deptLine);
+    meta.appendChild(subjLine);
+
+    card.appendChild(header);
+    card.appendChild(meta);
+    el.appendChild(card);
+  });
 }
 
 function openTeacherModal() {
@@ -241,20 +379,50 @@ async function deleteTeacher(id) {
 // ─── Rooms ───────────────────────────────────
 function renderRooms() {
   const el = document.getElementById('rooms-list');
-  if (!state.rooms.length) { el.innerHTML = '<p class="muted">Аудиторій ще немає</p>'; return; }
-  el.innerHTML = state.rooms.map(r => `
-    <div class="item-card">
-      <div class="item-card-header">
-        <div class="item-card-title">🏛 Ауд. ${r.number}</div>
-        <div class="item-card-actions">
-          <button class="btn btn-danger btn-sm" onclick="deleteRoom(${r.id})">Видалити</button>
-        </div>
-      </div>
-      <div class="item-card-meta">
-        <div>👥 Місткість: ${r.capacity} осіб</div>
-        <div>${tag(r.room_type_label, 'blue')}</div>
-      </div>
-    </div>`).join('');
+  el.textContent = '';
+  if (!state.rooms.length) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Аудиторій ще немає';
+    el.appendChild(p);
+    return;
+  }
+  state.rooms.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    const header = document.createElement('div');
+    header.className = 'item-card-header';
+
+    const title = document.createElement('div');
+    title.className = 'item-card-title';
+    title.textContent = '🏛 Ауд. ' + r.number;
+
+    const actions = document.createElement('div');
+    actions.className = 'item-card-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = 'Видалити';
+    delBtn.addEventListener('click', () => deleteRoom(r.id));
+    actions.appendChild(delBtn);
+
+    header.appendChild(title);
+    header.appendChild(actions);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-card-meta';
+    const capLine = document.createElement('div');
+    capLine.textContent = '👥 Місткість: ' + r.capacity + ' осіб';
+    const typeSpan = document.createElement('span');
+    typeSpan.className = 'tag tag-blue';
+    typeSpan.textContent = r.room_type_label;
+    meta.appendChild(capLine);
+    meta.appendChild(typeSpan);
+
+    card.appendChild(header);
+    card.appendChild(meta);
+    el.appendChild(card);
+  });
 }
 
 function openRoomModal() { openModal('modal-room'); }
@@ -285,20 +453,49 @@ async function deleteRoom(id) {
 // ─── Groups ──────────────────────────────────
 function renderGroups() {
   const el = document.getElementById('groups-list');
-  if (!state.groups.length) { el.innerHTML = '<p class="muted">Груп ще немає</p>'; return; }
-  el.innerHTML = state.groups.map(g => `
-    <div class="item-card">
-      <div class="item-card-header">
-        <div class="item-card-title">👥 ${g.name}</div>
-        <div class="item-card-actions">
-          <button class="btn btn-danger btn-sm" onclick="deleteGroup(${g.id})">Видалити</button>
-        </div>
-      </div>
-      <div class="item-card-meta">
-        <div>🎓 ${g.specialty}, ${g.year} курс</div>
-        <div>👤 ${g.size} студентів</div>
-      </div>
-    </div>`).join('');
+  el.textContent = '';
+  if (!state.groups.length) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Груп ще немає';
+    el.appendChild(p);
+    return;
+  }
+  state.groups.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    const header = document.createElement('div');
+    header.className = 'item-card-header';
+
+    const title = document.createElement('div');
+    title.className = 'item-card-title';
+    title.textContent = '👥 ' + g.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'item-card-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = 'Видалити';
+    delBtn.addEventListener('click', () => deleteGroup(g.id));
+    actions.appendChild(delBtn);
+
+    header.appendChild(title);
+    header.appendChild(actions);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-card-meta';
+    const specLine = document.createElement('div');
+    specLine.textContent = `🎓 ${g.specialty}, ${g.year} курс`;
+    const sizeLine = document.createElement('div');
+    sizeLine.textContent = `👤 ${g.size} студентів`;
+    meta.appendChild(specLine);
+    meta.appendChild(sizeLine);
+
+    card.appendChild(header);
+    card.appendChild(meta);
+    el.appendChild(card);
+  });
 }
 
 function openGroupModal() { openModal('modal-group'); }
@@ -331,21 +528,51 @@ async function deleteGroup(id) {
 // ─── Subjects ────────────────────────────────
 function renderSubjects() {
   const el = document.getElementById('subjects-list');
-  if (!state.subjects.length) { el.innerHTML = '<p class="muted">Дисциплін ще немає</p>'; return; }
+  el.textContent = '';
+  if (!state.subjects.length) {
+    const p = document.createElement('p');
+    p.className = 'muted';
+    p.textContent = 'Дисциплін ще немає';
+    el.appendChild(p);
+    return;
+  }
   const typeColor = { LECTURE:'blue', PRACTICE:'green', LAB:'orange', SEMINAR:'purple' };
-  el.innerHTML = state.subjects.map(s => `
-    <div class="item-card">
-      <div class="item-card-header">
-        <div class="item-card-title">📚 ${s.name}</div>
-        <div class="item-card-actions">
-          <button class="btn btn-danger btn-sm" onclick="deleteSubject(${s.id})">Видалити</button>
-        </div>
-      </div>
-      <div class="item-card-meta">
-        <div>⏱ ${s.hours_per_week} год/тиж</div>
-        <div>${tag(s.lesson_type_label, typeColor[s.lesson_type] || 'blue')}</div>
-      </div>
-    </div>`).join('');
+  state.subjects.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+
+    const header = document.createElement('div');
+    header.className = 'item-card-header';
+
+    const title = document.createElement('div');
+    title.className = 'item-card-title';
+    title.textContent = '📚 ' + s.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'item-card-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-danger btn-sm';
+    delBtn.textContent = 'Видалити';
+    delBtn.addEventListener('click', () => deleteSubject(s.id));
+    actions.appendChild(delBtn);
+
+    header.appendChild(title);
+    header.appendChild(actions);
+
+    const meta = document.createElement('div');
+    meta.className = 'item-card-meta';
+    const hoursLine = document.createElement('div');
+    hoursLine.textContent = `⏱ ${s.hours_per_week} год/тиж`;
+    const typeSpan = document.createElement('span');
+    typeSpan.className = `tag tag-${typeColor[s.lesson_type] || 'blue'}`;
+    typeSpan.textContent = s.lesson_type_label;
+    meta.appendChild(hoursLine);
+    meta.appendChild(typeSpan);
+
+    card.appendChild(header);
+    card.appendChild(meta);
+    el.appendChild(card);
+  });
 }
 
 function openSubjectModal() { openModal('modal-subject'); }
@@ -374,15 +601,20 @@ async function deleteSubject(id) {
 }
 
 // ─── Lessons ─────────────────────────────────
+
+// Безпечне заповнення <select> через DOM API
 function fillSelects(prefix) {
-  const selectors = { subject: 'subjects', teacher: 'teachers', group: 'groups', room: 'rooms' };
-  const labels    = { subject: s => s.name, teacher: t => t.name, group: g => g.name, room: r => `${r.number} (${r.capacity} м.)` };
-  for (const [field, stateKey] of Object.entries(selectors)) {
+  const cfg = {
+    subject: { key: 'subjects', label: s => s.name },
+    teacher: { key: 'teachers', label: t => t.name },
+    group:   { key: 'groups',   label: g => g.name },
+    room:    { key: 'rooms',    label: r => `${r.number} (${r.capacity} м.)` },
+  };
+  Object.entries(cfg).forEach(([field, { key, label }]) => {
     const el = document.getElementById(`${prefix}-${field}`);
-    el.innerHTML = state[stateKey].map(item =>
-      `<option value="${item.id}">${labels[field](item)}</option>`
-    ).join('');
-  }
+    el.textContent = '';
+    state[key].forEach(item => el.appendChild(makeOption(item.id, label(item))));
+  });
 }
 
 function openLessonModal() {
