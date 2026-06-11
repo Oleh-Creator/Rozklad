@@ -72,7 +72,8 @@ document.querySelectorAll('.nav-link').forEach(link => {
   });
 });
 
-// ─── Initial Load (top-level await, requires type="module") ──
+// ─── Initial Load ────────────────────────────
+async function bootstrap() {
 
 // ─── Dashboard ───────────────────────────────
 async function loadDashboard() {
@@ -678,15 +679,18 @@ async function refreshLessons() {
   state.lessons = r.data || [];
 }
 
-// ─── Boot: top-level await ───────────────────
-const [t, r, g, s, l] = await Promise.all([
-  api('/api/teachers'), api('/api/rooms'),
-  api('/api/groups'), api('/api/subjects'), api('/api/lessons')
-]);
-state.teachers = t.data || [];
-state.rooms    = r.data || [];
-state.groups   = g.data || [];
-state.subjects = s.data || [];
-state.lessons  = l.data || [];
-await loadDashboard();
-populateFilterSelects();
+// ─── Boot ────────────────────────────────────
+  const [t, r, g, s, l] = await Promise.all([
+    api('/api/teachers'), api('/api/rooms'),
+    api('/api/groups'), api('/api/subjects'), api('/api/lessons')
+  ]);
+  state.teachers = t.data || [];
+  state.rooms    = r.data || [];
+  state.groups   = g.data || [];
+  state.subjects = s.data || [];
+  state.lessons  = l.data || [];
+  await loadDashboard();
+  populateFilterSelects();
+}
+
+bootstrap();
