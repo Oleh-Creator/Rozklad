@@ -24,7 +24,7 @@ def clear_all():
         # Скидаємо автоінкремент
         conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('teachers','rooms','groups','subjects','lessons')")
         conn.execute("PRAGMA foreign_keys = ON")
-    print("🗑  База даних очищена")
+    print("[X]  База даних очищена")
 
 
 def seed():
@@ -32,9 +32,9 @@ def seed():
     clear_all()
     svc = ScheduleService()
 
-    print("🌱 Заповнення демо-даними...")
+    print("[+] Заповнення демо-даними...")
 
-    # ── Викладачі ──
+    #  Викладачі 
     teachers_data = [
         {"name": "Іваненко Петро Сергійович",   "department": "Кафедра інформатики",        "subjects": ["Алгоритми", "Структури даних"]},
         {"name": "Коваленко Марія Іванівна",     "department": "Кафедра математики",          "subjects": ["Вища математика", "Лінійна алгебра"]},
@@ -46,9 +46,9 @@ def seed():
     for td in teachers_data:
         t = svc.save_teacher(td)
         teacher_ids.append(t.id)
-        print(f"  ✓ Викладач: {t.name} (id={t.id})")
+        print(f"  OK Викладач: {t.name} (id={t.id})")
 
-    # ── Аудиторії ──
+    #  Аудиторії 
     rooms_data = [
         {"number": "101",  "capacity": 120, "room_type": "LECTURE_HALL"},
         {"number": "202",  "capacity": 80,  "room_type": "LECTURE_HALL"},
@@ -61,9 +61,9 @@ def seed():
     for rd in rooms_data:
         r = svc.save_room(rd)
         room_ids.append(r.id)
-        print(f"  ✓ Аудиторія: {r.number} (id={r.id})")
+        print(f"  OK Аудиторія: {r.number} (id={r.id})")
 
-    # ── Групи ──
+    #  Групи 
     groups_data = [
         {"name": "КН-21", "size": 25, "year": 2, "specialty": "Комп'ютерні науки"},
         {"name": "КН-22", "size": 28, "year": 2, "specialty": "Комп'ютерні науки"},
@@ -74,9 +74,9 @@ def seed():
     for gd in groups_data:
         g = svc.save_group(gd)
         group_ids.append(g.id)
-        print(f"  ✓ Група: {g.name} (id={g.id})")
+        print(f"  OK Група: {g.name} (id={g.id})")
 
-    # ── Дисципліни ──
+    #  Дисципліни 
     subjects_data = [
         {"name": "Алгоритми",        "hours_per_week": 2, "lesson_type": "LECTURE"},
         {"name": "Структури даних",  "hours_per_week": 2, "lesson_type": "PRACTICE"},
@@ -89,20 +89,20 @@ def seed():
     for sd in subjects_data:
         s = svc.save_subject(sd)
         subject_ids.append(s.id)
-        print(f"  ✓ Дисципліна: {s.name} (id={s.id})")
+        print(f"  OK Дисципліна: {s.name} (id={s.id})")
 
-    # ── Розклад (авто-підбір) ──
-    print("\n📅 Генерація розкладу...")
+    #  Розклад (авто-підбір) 
+    print("\n Генерація розкладу...")
     schedule_plan = [
         # (subject_idx, teacher_idx, group_idx, room_idx)
-        (0, 0, 0, 0),   # Алгоритми — КН-21 — лекційна 101
-        (1, 0, 0, 4),   # Структури даних — КН-21 — семінарська 410
-        (2, 1, 1, 1),   # Вища математика — КН-22 — лекційна 202
-        (3, 2, 2, 2),   # Python — ІТ-31 — комп. лаб 305
-        (4, 2, 3, 4),   # Рефакторинг — ПЗ-41 — семінарська 410
-        (5, 3, 0, 3),   # Бази даних — КН-21 — комп. лаб 306
-        (0, 0, 1, 0),   # Алгоритми — КН-22
-        (3, 2, 3, 2),   # Python — ПЗ-41
+        (0, 0, 0, 0),   # Алгоритми  КН-21  лекційна 101
+        (1, 0, 0, 4),   # Структури даних  КН-21  семінарська 410
+        (2, 1, 1, 1),   # Вища математика  КН-22  лекційна 202
+        (3, 2, 2, 2),   # Python  ІТ-31  комп. лаб 305
+        (4, 2, 3, 4),   # Рефакторинг  ПЗ-41  семінарська 410
+        (5, 3, 0, 3),   # Бази даних  КН-21  комп. лаб 306
+        (0, 0, 1, 0),   # Алгоритми  КН-22
+        (3, 2, 3, 2),   # Python  ПЗ-41
     ]
 
     for (si, ti, gi, ri) in schedule_plan:
@@ -113,10 +113,10 @@ def seed():
             room_id=room_ids[ri],
             strategy_name="balanced"
         )
-        status = "✓" if ok else "✗"
+        status = "OK" if ok else "FAIL"
         print(f"  {status} {subjects_data[si]['name']} / {groups_data[gi]['name']}: {msg}")
 
-    print("\n✅ Готово! Запустіть: python app.py")
+    print("\nOK Готово! Запустіть: python app.py")
 
 
 if __name__ == "__main__":
